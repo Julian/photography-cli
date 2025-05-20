@@ -8,7 +8,6 @@
   :alt: PyPI version
   :target: https://pypi.org/project/photography/
 
-.. |CI| image:: https://github.com/Julian/photography/workflows/CI/badge.svg
+.. |CI| image:: https://github.com/Julian/photography-cli/workflows/CI/badge.svg
   :alt: Build status
-  :target: https://github.com/Julian/photography/actions?query=workflow%3ACI
-
+  :target: https://github.com/Julian/photography-cli/actions?query=workflow%3ACI
