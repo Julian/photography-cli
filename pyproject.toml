@@ -28,7 +28,16 @@ classifiers = [
 
 ]
 dynamic = ["version"]
+dependencies = [
+  "attrs",
+  "imagehash",
+  "pillow",
+  "rich-click",
+  "rpds.py",
+]
 
+[project.scripts]
+photography = "photography._cli:main"
 
 [project.urls]
 Issues = "https://github.com/Julian/photography-cli/issues/"
@@ -91,7 +100,8 @@ ignore = [
   "FBT",  # It's worth avoiding boolean args but I don't care to enforce it
   "FIX",  # Yes thanks, if I could it wouldn't be there
   "N",  # These naming rules are silly
-  "PLR0912",  # These metrics are fine to be aware of but not to enforce
+  "PLR0911",  # These metrics are fine to be aware of but not to enforce
+  "PLR0912",
   "PLR0913",
   "PLR0915",
   "PLW2901",  # Shadowing for loop variables is occasionally fine.
