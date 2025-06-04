@@ -66,7 +66,6 @@ QUARANTINE = click.option(
 #: The earliest year we assume we'll ever see a photo from.
 EARLIEST_YEAR = 1989
 
-
 NOW = datetime.now(UTC)
 
 
@@ -108,6 +107,24 @@ def move(media: Path, to: Path):
     if to.exists():
         raise RuntimeError(to)
     media.rename(to)
+
+
+@main.command()
+@click.argument("jpeg", type=click.Path(exists=True, path_type=Path))
+@click.pass_context
+def raw(ctx: click.Context, jpeg: Path):
+    """
+    Try to find a RAW file from a given JPEG.
+
+    Exits unsuccessfully if one isn't found, or if this isn't a JPEG.
+    """
+    raw = raw_for(jpeg)
+    if raw is None:
+        click.echo(f"No RAW found for {jpeg}.", err=True)
+        ctx.exit(1)
+    if not raw.is_file():
+        raise WTF(path=raw, description="Somehow this RAW doesn't exist??")
+    click.echo(raw)
 
 
 @main.command(name="import")
