@@ -57,11 +57,11 @@ QUARANTINE = click.option(
     type=click.Path(path_type=Path),
     default=DESKTOP / "quarantined",
     help=(
-        "The directory to move quarantined photos into. "
-        "It should *not* exist"
-        "Nothing should ever be overriden when doing so. "
+        "The directory to move quarantined photos into. It should *not* exist."
     ),
 )
+NEW_MEDIA = click.argument("new_media", type=click.Path(path_type=Path))
+LIBRARY = click.argument("library", type=click.Path(path_type=Path))
 
 #: The earliest year we assume we'll ever see a photo from.
 EARLIEST_YEAR = 1989
@@ -127,10 +127,44 @@ def raw(ctx: click.Context, jpeg: Path):
     click.echo(raw)
 
 
-@main.command(name="import")
+@main.command()
 @QUARANTINE
-@click.argument("new_media", type=click.Path(path_type=Path))
-@click.argument("library", type=click.Path(path_type=Path))
+@NEW_MEDIA
+@LIBRARY
+def cull(new_media: Path, library: Path, quarantine: Path):
+    """
+    Trash all new media which we know we want to delete.
+    """
+    if quarantine.exists():
+        raise click.BadParameter(f"{quarantine} already exists!")
+
+    quarantine.joinpath("trash").mkdir(parents=True)
+
+    for directory, _, files in new_media.walk():
+        for file in files:
+            path = directory / file
+            effect = decide(path=path)
+            if not effect.problematic:
+                continue
+
+            move_to = effect.will_move_to(
+                source=path.relative_to(new_media),
+                library=library,
+                quarantine=quarantine,
+            )
+            if move_to.is_relative_to(quarantine / "trash"):
+                if move_to.exists():
+                    raise WTF(
+                        path=move_to,
+                        description="Somehow already exists!",
+                    )
+                click.echo(f"{path} -> {move_to}")
+                path.rename(move_to)
+
+
+@QUARANTINE
+@NEW_MEDIA
+@LIBRARY
 def import_(new_media: Path, library: Path, quarantine: Path) -> None:
     """
     Import the new photos/videos from the given directory into the library.
