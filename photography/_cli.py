@@ -190,6 +190,13 @@ def decide(path: Path) -> Effect:
         original = path.parent.joinpath(stem + path.suffix)
         if original.is_file():
             return Duplicated(better=original)
+
+        # PXL_FOO.RAW-01.MP.COVER~2.jpg -> PXL_FOO.RAW-02.ORIGINAL.dng
+        real_stem, has_raw, rest = stem.rpartition(".RAW-")
+        glob = list(path.parent.glob(real_stem + ".RAW-*.dng"))
+        if len(glob) == 1:
+            return Duplicated(better=glob[0])
+
         raise WTF(
             path,
             f"{path.name} looks like a tilde-suffixed Google Camera "
