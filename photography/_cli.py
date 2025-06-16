@@ -138,21 +138,20 @@ def cull(new_media: Path, library: Path, quarantine: Path):
     if quarantine.exists():
         raise click.BadParameter(f"{quarantine} already exists!")
 
-    quarantine.joinpath("trash").mkdir(parents=True)
+    trash = quarantine.joinpath("trash")
+    trash.mkdir(parents=True)
 
     for directory, _, files in new_media.walk():
         for file in files:
             path = directory / file
             effect = decide(path=path)
-            if not effect.problematic:
-                continue
 
             move_to = effect.will_move_to(
                 source=path.relative_to(new_media),
                 library=library,
                 quarantine=quarantine,
             )
-            if move_to.is_relative_to(quarantine / "trash"):
+            if move_to.is_relative_to(trash):
                 if move_to.exists():
                     raise WTF(
                         path=move_to,
@@ -160,6 +159,11 @@ def cull(new_media: Path, library: Path, quarantine: Path):
                     )
                 click.echo(f"{path} -> {move_to}")
                 path.rename(move_to)
+
+    if list(trash.iterdir()) == []:
+        trash.rmdir()
+        if list(quarantine.iterdir()) == []:
+            quarantine.rmdir()
 
 
 @QUARANTINE
@@ -556,7 +560,9 @@ class Import:
                 raise WTF(path, "No dates??")
 
     def will_move_to(self, source: Path, library: Path, quarantine: Path):
-        return library / self.date.strftime("%Y/%m/%d") / source.name
+        target = library / self.date.strftime("%Y/%m/%d") / source.name
+        assert not target.exists(), (source, target)  # noqa: S101
+        return target
 
 
 def raw_for(path: Path) -> Path | None:
