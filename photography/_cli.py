@@ -18,9 +18,11 @@ To Do:
     - number of videos
     - number of files with each resulting effect (in groups)
 
+
   * Build a persistent `imagehash` database
   * Strip leading `.` from hidden files we're trash-confirming
   * Write some manifest out on what files we moved where
+    - as reversible as possible, so maybe with a command to undo
 
   * Signal which files are safe to delete from the phone
 
