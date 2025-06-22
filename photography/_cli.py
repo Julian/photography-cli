@@ -84,14 +84,6 @@ class WTF(Exception):
     description: str
 
 
-class UnknownImageFormat(Exception):
-    """
-    We think this is an image but we don't know what format it's in.
-
-    This might mean we need some new parsing logic.
-    """
-
-
 @click.group()
 def main() -> None:
     """
