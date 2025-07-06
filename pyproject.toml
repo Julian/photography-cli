@@ -44,6 +44,11 @@ Issues = "https://github.com/Julian/photography-cli/issues/"
 Funding = "https://github.com/sponsors/Julian"
 Source = "https://github.com/Julian/photography-cli"
 
+[dependency-groups]
+dev = [
+  "pytest>=8.4.1",
+]
+
 [tool.coverage.html]
 show_contexts = true
 skip_covered = false
