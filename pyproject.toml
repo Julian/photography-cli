@@ -46,6 +46,7 @@ Source = "https://github.com/Julian/photography-cli"
 
 [dependency-groups]
 dev = [
+  "pudb>=2025.1",
   "pytest>=8.4.1",
 ]
 
