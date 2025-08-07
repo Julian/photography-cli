@@ -1,2 +1,2 @@
 def test_it_imports():
-    import photography  # noqa: F401
+    import photography  # noqa: F401, PLC0415
