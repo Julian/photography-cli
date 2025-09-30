@@ -223,7 +223,7 @@ def decide(path: Path) -> Effect:
             return Duplicated(better=original)
 
         # PXL_FOO.RAW-01.MP.COVER~2.jpg -> PXL_FOO.RAW-02.ORIGINAL.dng
-        real_stem, has_raw, rest = stem.rpartition(".RAW-")
+        real_stem, _, _ = stem.rpartition(".RAW-")
         glob = list(path.parent.glob(real_stem + ".RAW-*.dng"))
         if len(glob) == 1:
             return Duplicated(better=glob[0])
@@ -402,7 +402,7 @@ def datetime_from(maybe_ymd: str, maybe_time_and_rest: str) -> datetime | None:
     """
     Parse a datetime out of the PXL_-style file format's date/time components.
     """
-    maybe_time, _, rest = maybe_time_and_rest.partition(".")
+    maybe_time, _, _ = maybe_time_and_rest.partition(".")
     try:
         struct = strptime(f"{maybe_ymd}_{maybe_time}", "%Y%m%d_%H%M%S%f")
     except ValueError:
