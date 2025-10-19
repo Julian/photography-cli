@@ -1,17 +1,17 @@
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 import os
+import subprocess
 
 import nox
 
 ROOT = Path(__file__).parent
 PYPROJECT = ROOT / "pyproject.toml"
-
 PACKAGE = ROOT / "photography"
 
 PYTHON = "3.13"
 
-nox.options.default_venv_backend = "uv|virtualenv"
+nox.options.default_venv_backend = "uv"
 nox.options.sessions = []
 
 
@@ -65,8 +65,15 @@ def audit(session):
     """
     Audit Python dependencies for vulnerabilities.
     """
-    session.install("pip-audit", ROOT)
-    session.run("python", "-m", "pip_audit")
+    session.install("pip-audit")
+    with NamedTemporaryFile() as tmpfile:
+        subprocess.run(
+            ["uv", "pip", "freeze"],  # noqa: S607
+            cwd=ROOT,
+            check=True,
+            stdout=tmpfile,
+        )
+        session.run("python", "-m", "pip_audit", "-r", tmpfile.name)
 
 
 @session(tags=["build"])
