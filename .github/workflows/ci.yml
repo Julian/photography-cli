@@ -10,16 +10,30 @@ on:
   schedule:
     # Daily at 4:14
     - cron: "14 4 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   list:
+    name: List nox sessions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # checkout
     outputs:
       noxenvs: ${{ steps.noxenvs-matrix.outputs.noxenvs }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.0
+        with:
+          persist-credentials: false
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v7.1.0
+        with:
+          enable-cache: false
       - id: noxenvs-matrix
         run: |
           echo >>$GITHUB_OUTPUT noxenvs=$(
@@ -27,8 +41,11 @@ jobs:
           )
 
   ci:
+    name: Run nox session
     needs: list
     runs-on: macos-latest
+    permissions:
+      contents: read  # checkout
 
     strategy:
       fail-fast: false
@@ -37,7 +54,9 @@ jobs:
         posargs: [""]
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.0
+        with:
+          persist-credentials: false
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y libenchant-2-dev
         if: runner.os == 'Linux' && startsWith(matrix.noxenv, 'docs')
@@ -46,11 +65,17 @@ jobs:
         if: runner.os == 'macOS' && startsWith(matrix.noxenv, 'docs')
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v7.1.0
+        with:
+          enable-cache: false
       - name: Run nox
-        run: uvx nox -s "${{ matrix.noxenv }}" -- ${{ matrix.posargs }}
+        env:
+          NOXENV: ${{ matrix.noxenv }}
+          POSARGS: ${{ matrix.posargs }}
+        run: uvx nox -s "$NOXENV" -- $POSARGS
 
   packaging:
+    name: Package and release
     needs: ci
     runs-on: ubuntu-latest
     environment:
@@ -58,28 +83,27 @@ jobs:
       url: https://pypi.org/p/photography
 
     permissions:
-      contents: write
-      id-token: write
+      contents: write  # gh release create
+      id-token: write  # OIDC for trusted publishing to PyPI
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.0
         with:
-          submodules: "recursive"
+          persist-credentials: false
       - name: Set up uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b  # v7.1.0
         with:
-          enable-cache: true
+          enable-cache: false
 
       - name: Build our distributions
         run: uv run --frozen --with 'build[uv]' -m build --installer=uv
 
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # release/v1
       - name: Create a Release
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            dist/*
-          generate_release_notes: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+        run: gh release create "$REF_NAME" dist/* --generate-notes
